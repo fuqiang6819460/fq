@@ -1,10 +1,6 @@
 package cn.edu.pku.fuqiang.util;
 
-/**
- * Created by fuqia on 2016/10/11.
- */
-
-import android.content.Context;
+        import android.content.Context;
         import android.net.ConnectivityManager;
         import android.net.NetworkInfo;
 
