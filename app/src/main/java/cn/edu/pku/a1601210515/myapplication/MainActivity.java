@@ -3,7 +3,8 @@ package cn.edu.pku.a1601210515.myapplication;
 import cn.edu.pku.fuqiang.bean.TodayWeather;
 import cn.edu.pku.fuqiang.util.NetUtil;
 import android.app.Activity;
-        import android.content.SharedPreferences;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -31,6 +32,8 @@ import java.io.StringReader;
 import java.net.HttpURLConnection;
         import java.net.URL;
 
+import static android.content.ContentValues.TAG;
+
 
 /**
  * Created by zhangqixun on 16/7/4.
@@ -38,9 +41,11 @@ import java.net.HttpURLConnection;
 public class MainActivity extends Activity implements View.OnClickListener {
     private static final int UPDATE_TODAY_WEATHER = 1;
     private ImageView mUpdateBtn;
+    private ImageView mCitySelect;
     private TextView cityTv, timeTv, humidityTv, weekTv, pmDataTv, pmQualityTv,
             temperatureTv, climateTv, windTv, city_name_Tv;
     private ImageView weatherImg, pmImg;
+
     private Handler mHandler = new Handler() {
         public void handleMessage(android.os.Message msg) {
             switch (msg.what) {
@@ -53,6 +58,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
 
     };
+
+
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -83,9 +90,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
         climateTv.setText("N/A");
         windTv.setText("N/A");
     }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG,"MainActivity->Oncreate");
         setContentView(R.layout.weather_info);
 
         mUpdateBtn = (ImageView) findViewById(R.id.title_update_btn);
@@ -98,6 +108,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
             Log.d("myWeather", "网络挂了");
             Toast.makeText(MainActivity.this, "网络挂了！", Toast.LENGTH_LONG).show();
         }
+        mCitySelect=(ImageView)findViewById(R.id.title_city_manager);
+        mCitySelect.setOnClickListener(this);
         initView();
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -105,14 +117,19 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     @Override
+
+
     public void onClick(View view) {
-
+        if(view.getId() == R.id.title_city_manager){
+            //从当前Activity切换到SelectActivity中
+            Intent i = new Intent(this, SelectCity.class);
+            //startActivity(i);
+            startActivityForResult(i,1);
+        }
         if (view.getId() == R.id.title_update_btn) {
-
             SharedPreferences sharedPreferences = getSharedPreferences("config", MODE_PRIVATE);
             String cityCode = sharedPreferences.getString("main_city_code", "101010100");
             Log.d("myWeather", cityCode);
-
 
             if (NetUtil.getNetworkState(this) != NetUtil.NETWORN_NONE) {
                 Log.d("myWeather", "网络OK");
@@ -123,6 +140,22 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
         }
     }
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 1 && resultCode == RESULT_OK) {
+            String newCityCode= data.getStringExtra("cityCode");
+            Log.d("myWeather", "选择的城市代码为"+newCityCode);
+
+            if (NetUtil.getNetworkState(this) != NetUtil.NETWORN_NONE) {
+                Log.d("myWeather", "网络OK");
+                queryWeatherCode(newCityCode);
+            } else {
+                Log.d("myWeather", "网络挂了");
+                Toast.makeText(MainActivity.this, "网络挂了！", Toast.LENGTH_LONG).show();
+            }
+
+        }
+    }
+
 
     /**
      * @param cityCode
@@ -152,7 +185,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     String responseStr = response.toString();
                     Log.d("myWeather", responseStr);
                     todayWeather = parseXML(responseStr);
-                    todayWeather = parseXML(responseStr);
                     if (todayWeather != null) {
                         Log.d("myWeather", todayWeather.toString());
                         Message msg =new Message();
@@ -160,6 +192,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         msg.obj=todayWeather;
                         mHandler.sendMessage(msg);
                     }
+
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
@@ -257,6 +291,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
         return todayWeather;
     }
+
     void updateTodayWeather(TodayWeather todayWeather){
         city_name_Tv.setText(todayWeather.getCity()+"天气");
         cityTv.setText(todayWeather.getCity());
@@ -271,5 +306,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         Toast.makeText(MainActivity.this,"更新成功！",Toast.LENGTH_SHORT).show();
 
     }
+
 
 }
